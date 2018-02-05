@@ -24,4 +24,4 @@ This plugin is used in the following websites:
 - http://act.orienteering.asn.au/
 - http://www.bendigo-orienteers.com.au/
 - https://www.vicorienteering.asn.au/
-and maybe more...?
+- and maybe more...?
