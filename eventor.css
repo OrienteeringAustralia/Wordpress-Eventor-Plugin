@@ -1,0 +1,29 @@
+.eventor td {
+	vertical-align: middle;
+}
+
+.evt-date {
+    white-space: nowrap;
+}
+
+div.eventor dl { 
+    border-bottom: 1px solid #EEE; 
+}
+
+div.eventor dt {
+	clear: left;
+	float: left;
+	width: 140px;
+	border-top: 1px solid #EEE;
+	font-weight: bold;
+	padding-top: 15px;
+}
+
+div.eventor dd {
+	width: 540px;
+	margin-left: 140px;
+	margin-bottom: 10px;
+	padding-top: 15px;
+	border-top: 1px solid #EEE;
+}
+

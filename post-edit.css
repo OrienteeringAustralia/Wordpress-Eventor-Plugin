@@ -1,0 +1,10 @@
+table#evtr-table th {
+	text-align: left;
+	width: 25%;
+}
+
+.evtr-past,
+.evtr-future {display:none;}
+
+.evtr-show-past .evtr-past,
+.evtr-show-future .evtr-future {display: table-row;}
