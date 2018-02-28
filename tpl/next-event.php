@@ -11,11 +11,11 @@ if (count($events)) {
 	    echo ", ";
 	    echo $e->date;
 	    echo " : &nbsp;";
-		echo "<a href='/eventor/events/details/" . $e->id . "'>" . $e->title . "</a>";
+		echo "<span style='white-space: nowrap;'><a href='/eventor/events/details/" . $e->id . "'>" . $e->title . "</a></span>";
         echo "</b>";
         if ($e->location) {
-            echo " &nbsp;[Directions by <a href='http://maps.apple.com/?daddr=" . (string) $e->location['y'] . "," . (string) $e->location['x'] . "'>Apple Maps</a>, ";
-            echo "<a href='http://maps.google.com/?daddr=" . (string) $e->location['y'] . "," . (string) $e->location['x'] . "&saddr=Current%20Location'>Google Maps</a>]";
+            echo " &nbsp;<span style='white-space: nowrap; font-size: 90%;'>[Directions by <a href='http://maps.apple.com/?daddr=" . (string) $e->location['y'] . "," . (string) $e->location['x'] . "'>Apple Maps</a>, ";
+            echo "<a href='http://maps.google.com/?daddr=" . (string) $e->location['y'] . "," . (string) $e->location['x'] . "&saddr=Current%20Location'>Google Maps</a>]</span>";
         }
         echo "</center>";
 	return; 
