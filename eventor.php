@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Eventor
  * Description: Integration with Eventor (http://eventor.orienteering.asn.au)
- * Version: 0.9
+ * Version: 0.9.1
  * License: GPL3
  */
 class Eventor {
@@ -113,7 +113,7 @@ class Eventor {
 			],
 			'label'                => 'eventor',
 			'description'          => 'Eventor-based lists of events',
-			'supports'             => ['title', 'editor', /*'custom-fields',*/],
+			'supports'             => ['title'],
 			'hierarchical'         => false,
 			'public'               => true,
 			'show_ui'              => true,
@@ -138,8 +138,7 @@ class Eventor {
 
     /**
      * Add the OceanWP Settings metabox in your CPT
-     * Need this to customise the sidebar (otherwise it uses default sidebar).
-     * Only relevant for OceanWP theme.
+     * Need this to customise the sidebar (otherwise it uses default sidebar) 
      */
     function oceanwp_metabox( $types ) {
     	// Your custom post type
@@ -242,6 +241,15 @@ class Eventor {
 					<input type='text' class="regular-text code" name='eventor_extraids' id="eventor_extraids" value='<?php echo get_post_meta($post->ID, '_evtr_extraids', true); ?>' />
 					<i>Comma delimited list of extra event ids to include (eg. a NSW event that is close to Canberra)</i></td>
 			</tr>
+			<tr>
+				<th><label for="eventor_disciplinefilter"><?php _e('Discipline Filter'); ?>: </label></th>
+				<td><select name="eventor_disciplinefilter" id="eventor_disciplinefilter">
+						<?php
+						$api = new EventorAPI();
+						echo implode("\n", $api->getDisciplineOptions(get_post_meta($post->ID, '_evtr_disciplinefilter', true))); ?>
+					</select>
+				</td>
+			</tr>
 			</tbody>
 		</table>
 		<?php
@@ -280,6 +288,8 @@ class Eventor {
 		if (isset($_REQUEST['eventor_extraids'])) {
 			update_post_meta($post_id, '_evtr_extraids', $_REQUEST['eventor_extraids']);
 		}
+
+		update_post_meta($post_id, '_evtr_disciplinefilter', isset($_REQUEST['eventor_disciplinefilter']) ? (int) $_REQUEST['eventor_disciplinefilter'] : 0);
 
 		if (isset($_REQUEST['eventor_tpl'])) {
 			$tpl = sanitize_text_field($_REQUEST['eventor_tpl']);
@@ -335,7 +345,6 @@ class Eventor {
                 } else {
     				$html .= '<p>Results by Class | <a href="' . $url . '?bycourse">Results by Course</a></p>';
                 }
-                
 				$html .= '<br clear="left">' . $e->display();
 				
                 $html .= '<br/><p>';
@@ -357,6 +366,7 @@ class Eventor {
 
 			} else {
 				add_filter('the_content', [$this, 'evtr_add_events_list']);
+				add_filter('the_title', [$this, 'evtr_update_pagetitle'], 20);
 			}
 		}
 	}
@@ -381,7 +391,7 @@ class Eventor {
 			$disciplines       = $api->getDisciplines();
 			$event             = new stdClass;
 			$event->id         = (int) $xml->EventId;
-			$event->date       = static::getDateTime($xml->StartDate);
+			$event->date       = getDateTime($xml->StartDate);
 			$event->title      = (string) $xml->Name;
 			$event->club       = $clubs[(int) $xml->Organiser->Organisation->OrganisationId];
 			
@@ -401,11 +411,11 @@ class Eventor {
 
 	    	/// Start and end time in iCal format
             $event->starttime = $event->date->format('Ymd') . "T" . $event->date->format("His");
-            $enddate = static::getDateTime($xml->FinishDate);
+            $enddate = getDateTime($xml->FinishDate);
             $event->endtime = $enddate->format('Ymd') . "T" . $enddate->format("His");
             
             if (isset($xml->EntryBreak->ValidToDate)) {
-                $event->entryDeadline = static::getDateTime($xml->EntryBreak->ValidToDate);
+                $event->entryDeadline = getDateTime($xml->EntryBreak->ValidToDate);
             }
             
             // $event->officials = [];
@@ -478,14 +488,16 @@ class Eventor {
 	function evtr_update_pagetitle($title) {
 		global $wp_query;
 		if (in_the_loop() && is_single() && 'eventor' == get_post_type()) {
-			static $event_title;
-			if ( ! isset($event_title)) {
-				$api         = new EventorAPI();
-				$xml         = $api->getData('event/' . $wp_query->query_vars['eventor_details']);
-				$event_title = (string) $xml->Name;
-			}
+		    return ''; /// don't display a title
+		    /// there's some change in the theme that means that the title was displaying (as a huge H1), and this seems the only way to delete it
+// 			static $event_title;
+// 			if ( ! isset($event_title)) {
+// 				$api         = new EventorAPI();
+// 				$xml         = $api->getData('event/' . $wp_query->query_vars['eventor_details']);
+// 				$event_title = (string) $xml->Name;
+// 			}
 
-			return $event_title;
+// 			return $event_title; 
 		} else {
 			return $title;
 		}
@@ -506,46 +518,6 @@ class Eventor {
 			return $title;
 		}
 	}
-
-    function parseEvent($e, $startdate, $enddate, $clubs, $disciplines) {
-    	$event          = new stdClass;
-    	$event->id      = (string) $e->EventId;
-    	$event->weekday = $startdate->format('l');
-    	$event->date    = $startdate->format('d-M-y');
-    	
-    	// Start and end time in iCal format
-        $event->starttime = $startdate->format('Ymd') . "T" . $startdate->format("His");
-        $event->endtime = $enddate->format('Ymd') . "T" . $enddate->format("His");
-    
-        if (isset($e->EntryBreak->ValidToDate)) {
-            $event->entryDeadline = static::getDateTime($e->EntryBreak->ValidToDate);
-        }
-
-    	$event->title = (string) $e->Name;
-    	$event->club  = $clubs[(int) $e->Organiser->OrganisationId];
-    	foreach ($e->DisciplineId as $d) {
-    		$event->discipline[] = isset($disciplines[(int) $d]) ? $disciplines[(int) $d] : 'Unknown';
-    	}
-    	$event->discipline = implode(',<br />', $event->discipline);
-    	//		$race				= $e->EventRace->attributes();
-    	//		$event->distance	= $race->raceDistance;
-    	//		$event->light		= $race->raceLightCondition;
-    	//		$event->location	= isset($e->EventRace->EventCenterPosition) ? $e->EventRace->EventCenterPosition->attributes() : false;
-    	$event->location = isset($e->EventRace->EventCenterPosition) ? $e->EventRace->EventCenterPosition->attributes() : false;
-    	$event->raceid = (string) $e->EventRace->EventRaceId;
-    	return $event;
-    }
-
-    function isExpiredEvent($e, $startdate, $mode, $now) {
-		if ($mode == 'future') {
-			$finishdatetime = clone($startdate);
-			$finishdatetime->modify('+ 1 day ');
-			$finishdatetime->setTime(3, 0);
-			if ($finishdatetime < $now) {
-				return true; //screening events finished yesterday
-			}
-		}
-    }
 
 	function evtr_add_events_list($content) {
 
@@ -613,12 +585,12 @@ class Eventor {
 					foreach ($xml->Event as $e) {
 						//if ($series) if (!preg_match('#'.$series.'#i', (string)$e->Name)) continue;
 
-						$startdate = static::getDateTime($e->StartDate);
-						$enddate = static::getDateTime($e->FinishDate);
+						$startdate = getDateTime($e->StartDate);
+						$enddate = getDateTime($e->FinishDate);
 
-                        if ($this->isExpiredEvent($e, $startdate, $mode, $now)) continue;
+                        if (isExpiredEvent($e, $startdate, $mode, $now)) continue;
                         
-                        $event = $this->parseEvent($e, $startdate, $enddate, $clubs, $disciplines);
+                        $event = parseEvent($e, $startdate, $enddate, $clubs, $disciplines);
 
 						if ($mode == 'past') {
 							$event->results = false;
@@ -653,12 +625,12 @@ class Eventor {
         			if ($xml) {
         			    
     					foreach ($xml->Event as $e) {
-                		    $startdate = Eventor::getDateTime($e->StartDate);
-                		    $enddate = Eventor::getDateTime($e->FinishDate);
+                		    $startdate = getDateTime($e->StartDate);
+                		    $enddate = getDateTime($e->FinishDate);
     
-                            if ($this->isExpiredEvent($e, $startdate, $mode, $now)) continue;
+                            if (isExpiredEvent($e, $startdate, $mode, $now)) continue;
 
-                            $event = $this->parseEvent($e, $startdate, $enddate, $clubs, $disciplines);
+                            $event = parseEvent($e, $startdate, $enddate, $clubs, $disciplines);
         					$events[]      = $event;
         					$startdates[]  = $startdate;
         
@@ -694,34 +666,6 @@ class Eventor {
 
 		return $content;
 	}
-
-	static function getDateTime($d, $tz = null) {
-		static $utc;
-		if ( ! $utc) {
-			$utc = new DateTimeZone('UTC');
-		}
-		if (isset($d->Date) && isset($d->Clock)) {
-			$date = new DateTime((string) $d->Date . ' ' . (string) $d->Clock, $utc);
-			$date->setTimezone(new DateTimeZone(get_option('timezone_string')));
-
-			return $date;
-		}
-	}
-
-	function getSeconds($t) {
-        if (preg_match('#(\d+):(\d+):?(\d+)?#', $t, $matches)) {
-           switch ( sizeof($matches) ) {
-                case 1:
-                     return 0;
-                case 2:
-                     return $matches[1];
-                case 3:
-                     return $matches[1] * 60 + $matches[2];
-                case 4:
-                     return $matches[1] * 3600 + $matches[2] * 60 + $matches[3];
-           }
-     }
-}
 
 	static function getTime($s) {
 		return $s ? floor($s / 60) . ':' . str_pad($s % 60, 2, '0', STR_PAD_LEFT) : '-';
@@ -772,13 +716,12 @@ class evtr_widget extends WP_Widget {
 
 		$title = apply_filters('widget_title', $instance['title']);
 		echo $args['before_widget'];
-		// Commented out the title - don't need another title
+		/// Commented out the title - don't need another title
 		//if ( ! empty($title)) {
 		//	echo $args['before_title'] . $title . $args['after_title'];
 		//}
 
 		$resetcache = isset($_REQUEST['resetcache']);
-
 		if (isset($instance['eventlist'])) {
 			$post     = get_post($instance['eventlist']);
 			$tz       = new DateTimeZone(get_option('timezone_string'));
@@ -790,6 +733,7 @@ class evtr_widget extends WP_Widget {
 			$mode     = get_post_meta($post->ID, '_evtr_mode', true);
 			$extraids = get_post_meta($post->ID, '_evtr_extraids', true);
 			$tpl      = plugin_dir_path(__FILE__) . 'tpl/' . (get_post_meta($post->ID, '_evtr_tpl', true) ?: 'default') . '.php';
+			$disciplinefilter = get_post_meta($post->ID, '_evtr_disciplinefilter', true);
 
 			if ($mode == 'past') {
 				$cache    = $resetcache ? 0 : 86400;
@@ -818,38 +762,30 @@ class evtr_widget extends WP_Widget {
 			$api = new EventorAPI();
 			$xml = $api->getData('events', $params, $cache);
 
-			$disciplines = [
-				1 => "Foot orienteering",
-				2 => "Mountain bike orienteering",
-				3 => "Ski orienteering",
-				4 => "Trail orienteering",
-				5 => "Radio orienteering",
-				6 => "Park and street orienteering",
-			];
-
-			$clubs = [];
-			if ($clubsxml = $api->getData('organisations')) {
-				foreach ($clubsxml->Organisation as $c) {
-					$clubs[(int) $c->OrganisationId] = (string) $c->Name;
-				}
-			}
+			$clubs       = $api->getOrganisations();
+			$disciplines = $api->getDisciplines();
 
 			$events = $startdates = [];
 
+
 			if ($xml) {
-				//	var_dump($xml);
+				//var_dump($xml);
 
 				foreach ($xml->Event as $e) {
 					//if ($series) if (!preg_match('#'.$series.'#i', (string)$e->Name)) continue;
+					if ($disciplinefilter != 0) {
+					    if ($e->DisciplineId != $disciplinefilter) continue;
+					}
 
-            		$startdate = Eventor::getDateTime($e->StartDate);
-            		$enddate = Eventor::getDateTime($e->FinishDate);
+            		$startdate = getDateTime($e->StartDate);
+            		$enddate = getDateTime($e->FinishDate);
 
-                    if ($this->isExpiredEvent($e, $startdate, $mode, $now)) continue;
+                    if (isExpiredEvent($e, $startdate, $mode, $now)) continue;
 
-                    $event = $this->parseEvent($e, $startdate, $enddate, $clubs, $disciplines);
+                    $event = parseEvent($e, $startdate, $enddate, $clubs, $disciplines);
 					$events[]      = $event;
 					$startdates[]  = $startdate;
+
 
 					if ($mode == 'past') {
 						$event->results = false;
@@ -864,19 +800,19 @@ class evtr_widget extends WP_Widget {
 					}
 				}
 			}
-			
+
 			if ($extraids) {
     			$api = new EventorAPI();
     			$xml = $api->getData('events', array('eventIds' => $extraids), $cache);
     			if ($xml) {
     			    
 					foreach ($xml->Event as $e) {
-            		    $startdate = Eventor::getDateTime($e->StartDate);
-            		    $enddate = Eventor::getDateTime($e->FinishDate);
+            		    $startdate = getDateTime($e->StartDate);
+            		    $enddate = getDateTime($e->FinishDate);
 
-                        if ($this->isExpiredEvent($e, $startdate, $mode, $now)) continue;
+                        if (isExpiredEvent($e, $startdate, $mode, $now)) continue;
     
-                        $event = $this->parseEvent($e, $startdate, $enddate, $clubs, $disciplines);
+                        $event = parseEvent($e, $startdate, $enddate, $clubs, $disciplines);
     					$events[]      = $event;
     					$startdates[]  = $startdate;
     
@@ -894,7 +830,7 @@ class evtr_widget extends WP_Widget {
     				}
     			}
 			}
-			
+
 			if ($events) {
     			array_multisort($startdates, ($mode == 'past' ? SORT_DESC : SORT_ASC), $events);
     			if ($count) {
@@ -902,7 +838,6 @@ class evtr_widget extends WP_Widget {
     			}
     			require $tpl;
             }
-			
 		} else {
 			echo "Please select item to display";
 		}
@@ -962,6 +897,19 @@ class EventorAPI {
 			6 => "Park and street orienteering",
 		];
     }
+    
+    function getDisciplineOptions($selected = 0) {
+		$options = [];
+		$options[] = '<option value="0"' . ($selected == '0' ? ' selected="selected"' : '') . '>ALL</option>';
+		
+		$disciplines = $this->getDisciplines();
+		foreach ($disciplines as $d_id => $d_name) {
+    		$options[] = '<option value="' . $d_id . '"' . ($selected == $d_id ? ' selected="selected"' : '') . '>' . $d_name . '</option>';
+		}
+
+		return $options;
+	}
+
 
 	function getPersonName($personId, $roleName, $eventTitle) {
 	    
@@ -1169,9 +1117,9 @@ class eventResult {
 			$this->comment = (string) $Event->Comment;
 		}
 		$this->punchType  = (string) $xml->PunchingUnitType['value'];
-		$this->startDate  = Eventor::getDateTime($Event->StartDate);
-		$this->finishDate = Eventor::getDateTime($Event->FinishDate);
-		$this->modifyDate = Eventor::getDateTime($Event->ModifyDate);
+		$this->startDate  = getDateTime($Event->StartDate);
+		$this->finishDate = getDateTime($Event->FinishDate);
+		$this->modifyDate = getDateTime($Event->ModifyDate);
 		$this->ModifiedBy = (int) $Event->ModifiedBy->PersonId;
 
 		foreach ($xml->ClassResult as $classResult) {
@@ -1270,6 +1218,7 @@ class classResult {
 		foreach ($xml->PersonResult as $person) {
 			$this->personResults[] = new personResult($person);
 		}
+
 		usort($this->personResults, ['Eventor', 'sortbyrank']);
 	}
 	
@@ -1402,9 +1351,9 @@ class personResult {
 		}
 
 		$Result        = $xml->Result;
-		$this->start   = Eventor::getDateTime($Result->StartTime);
-		$this->finish  = Eventor::getDateTime($Result->FinishTime);
-		$this->elapsed = Eventor::getSeconds($Result->Time);
+		$this->start   = getDateTime($Result->StartTime);
+		$this->finish  = getDateTime($Result->FinishTime);
+		$this->elapsed = getSeconds($Result->Time);
 
 		if (isset($Result->ResultPosition)) {
 			$this->position = (int) $Result->ResultPosition;
@@ -1502,9 +1451,80 @@ class evSplit {
 			$this->code = (int) $xml->ControlCode;
 		}
 		if (isset($xml->Time)) {
-			$this->time = Eventor::getSeconds((string) $xml->Time);
+			$this->time = getSeconds((string) $xml->Time);
 		}
 	}
+}
+
+// SOME UTILITY FUNCTIONS
+
+
+function isExpiredEvent($e, $startdate, $mode, $now) {
+	if ($mode == 'future') {
+		$finishdatetime = clone($startdate);
+		$finishdatetime->modify('+ 1 day ');
+		$finishdatetime->setTime(3, 0);
+		if ($finishdatetime < $now) {
+			return true; //screening events finished yesterday
+		}
+	}
+}
+
+function parseEvent($e, $startdate, $enddate, $clubs, $disciplines) {
+	$event          = new stdClass;
+	$event->id      = (string) $e->EventId;
+	$event->weekday = $startdate->format('l');
+	$event->date    = $startdate->format('d-M-y');
+	
+	/// Start and end time in iCal format
+    $event->starttime = $startdate->format('Ymd') . "T" . $startdate->format("His");
+    $event->endtime = $enddate->format('Ymd') . "T" . $enddate->format("His");
+
+    if (isset($e->EntryBreak->ValidToDate)) {
+        $event->entryDeadline = getDateTime($e->EntryBreak->ValidToDate);
+    }
+
+	$event->title = (string) $e->Name;
+	$event->club  = $clubs[(int) $e->Organiser->OrganisationId];
+	foreach ($e->DisciplineId as $d) {
+		$event->discipline[] = isset($disciplines[(int) $d]) ? $disciplines[(int) $d] : 'Unknown';
+	}
+	$event->discipline = implode(',<br />', $event->discipline);
+	$race = $e->EventRace->attributes();
+	$event->distance = $race->raceDistance;
+	//		$event->light		= $race->raceLightCondition;
+	//		$event->location	= isset($e->EventRace->EventCenterPosition) ? $e->EventRace->EventCenterPosition->attributes() : false;
+	$event->location = isset($e->EventRace->EventCenterPosition) ? $e->EventRace->EventCenterPosition->attributes() : false;
+	$event->raceid = (string) $e->EventRace->EventRaceId;
+	return $event;
+}
+
+function getDateTime($d, $tz = null) {
+	static $utc;
+	if ( ! $utc) {
+		$utc = new DateTimeZone('UTC');
+	}
+	if (isset($d->Date) && isset($d->Clock)) {
+		$date = new DateTime((string) $d->Date . ' ' . (string) $d->Clock, $utc);
+		$date->setTimezone(new DateTimeZone(get_option('timezone_string')));
+
+		return $date;
+	}
+}
+
+function getSeconds($t) {
+    if (preg_match('#(\d+):(\d+):?(\d+)?#', $t, $matches)) {
+       switch ( sizeof($matches) ) {
+            case 1:
+                 return 0;
+            case 2:
+                 return $matches[1];
+            case 3:
+                 return $matches[1] * 60 + $matches[2];
+            case 4:
+                 return $matches[1] * 3600 + $matches[2] * 60 + $matches[3];
+       }
+    }
 }
 
 if (!function_exists('write_log')) {
@@ -1525,3 +1545,4 @@ function var_dump_pre($mixed = null) {
   echo '</pre>';
   return null;
 }
+
