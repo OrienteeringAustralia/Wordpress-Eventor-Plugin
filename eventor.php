@@ -250,6 +250,12 @@ class Eventor {
 					</select>
 				</td>
 			</tr>
+			<tr>
+				<th><label for="eventor_titlefilter"><?php _e('Title Filter'); ?>: </label></th>
+				<td>
+					<input type='text' class="regular-text code" name='eventor_titlefilter' id="eventor_titlefilter" value='<?php echo get_post_meta($post->ID, '_evtr_titlefilter', true); ?>' />
+					<i>Only display events that include this text in the title</i></td>
+			</tr>
 			</tbody>
 		</table>
 		<?php
@@ -287,6 +293,10 @@ class Eventor {
 
 		if (isset($_REQUEST['eventor_extraids'])) {
 			update_post_meta($post_id, '_evtr_extraids', $_REQUEST['eventor_extraids']);
+		}
+
+		if (isset($_REQUEST['eventor_titlefilter'])) {
+			update_post_meta($post_id, '_evtr_titlefilter', $_REQUEST['eventor_titlefilter']);
 		}
 
 		update_post_meta($post_id, '_evtr_disciplinefilter', isset($_REQUEST['eventor_disciplinefilter']) ? (int) $_REQUEST['eventor_disciplinefilter'] : 0);
@@ -531,6 +541,7 @@ class Eventor {
 			$clsid    = get_post_meta($post->ID, '_evtr_classification', true);
 			$mode     = get_post_meta($post->ID, '_evtr_mode', true);
 			$extraids = get_post_meta($post->ID, '_evtr_extraids', true);
+			$titlefilter = get_post_meta($post->ID, '_evtr_titlefilter', true);
 			$tpl      = plugin_dir_path(__FILE__) . ('tpl/' . get_post_meta($post->ID, '_evtr_tpl', true) ?: 'default') . '.php';
 
 			$resetcache = isset($_REQUEST['resetcache']);
@@ -587,6 +598,10 @@ class Eventor {
 
 						$startdate = getDateTime($e->StartDate);
 						$enddate = getDateTime($e->FinishDate);
+
+                        if (strlen($titlefilter) > 0) {
+                            if (!preg_match('/' . $titlefilter . '/i',(string)$e->Name)) continue;
+                        }
 
                         if (isExpiredEvent($e, $startdate, $mode, $now)) continue;
                         
@@ -734,6 +749,7 @@ class evtr_widget extends WP_Widget {
 			$extraids = get_post_meta($post->ID, '_evtr_extraids', true);
 			$tpl      = plugin_dir_path(__FILE__) . 'tpl/' . (get_post_meta($post->ID, '_evtr_tpl', true) ?: 'default') . '.php';
 			$disciplinefilter = get_post_meta($post->ID, '_evtr_disciplinefilter', true);
+			$titlefilter = get_post_meta($post->ID, '_evtr_titlefilter', true);
 
 			if ($mode == 'past') {
 				$cache    = $resetcache ? 0 : 86400;
@@ -776,6 +792,10 @@ class evtr_widget extends WP_Widget {
 					if ($disciplinefilter != 0) {
 					    if ($e->DisciplineId != $disciplinefilter) continue;
 					}
+					
+                    if (strlen($titlefilter) > 0) {
+                        if (!preg_match('/' . $titlefilter . '/i',(string)$e->Name)) continue;
+                    }
 
             		$startdate = getDateTime($e->StartDate);
             		$enddate = getDateTime($e->FinishDate);
