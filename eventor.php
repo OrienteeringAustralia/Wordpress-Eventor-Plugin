@@ -383,15 +383,6 @@ class Eventor {
 
 	function evtr_add_event_details($content) {
 	    
-	    function object_to_array($obj) {
-            $_arr = is_object($obj) ? get_object_vars($obj) : $obj;
-            foreach ($_arr as $key => $val) {
-                    $val = (is_array($val) || is_object($val)) ? object_to_array($val) : $val;
-                    $arr[$key] = $val;
-            }
-            return $arr;
-        }
-
 		if (is_single() && 'eventor' == get_post_type()) {
 			global $wp_query;
 			$tpl               = plugin_dir_path(__FILE__) . 'tpl/details.php';
@@ -1557,6 +1548,15 @@ if (!function_exists('write_log')) {
             }
         }
     }
+}
+
+function object_to_array($obj) {
+    $_arr = is_object($obj) ? get_object_vars($obj) : $obj;
+    foreach ($_arr as $key => $val) {
+            $val = (is_array($val) || is_object($val)) ? object_to_array($val) : $val;
+            $arr[$key] = $val;
+    }
+    return $arr;
 }
 
 function var_dump_pre($mixed = null) {
