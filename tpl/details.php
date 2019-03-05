@@ -118,6 +118,8 @@
 		<!--dd>< ?= $event->location['lat'] ?>, < ?= $event->location['lng'] ?></dd-->
 		<dt>Eventor</dt>
 		<dd><a target='_blank' href='http://eventor.orienteering.asn.au/Events/Show/<?= $event->id ?>'>View event on Eventor (opens in a new tab)</a></dd>
+		<dt>Risk Statement</dt>
+		<dd><a href="http://act.orienteering.asn.au/resources/event-management/risk-statement/">View Risk Statement</a></dd>
 	</dl>
 	
 	<?php if (isset($event->phoneNumber) || isset($event->mailAddress)) { ?>
