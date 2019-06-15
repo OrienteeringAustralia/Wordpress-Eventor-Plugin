@@ -416,7 +416,8 @@ class Eventor {
             $event->endtime = $enddate->format('Ymd') . "T" . $enddate->format("His");
             
             if (isset($xml->EntryBreak->ValidToDate)) {
-                $event->entryDeadline = getDateTime($xml->EntryBreak->ValidToDate);
+                $lastEntryBreak = $xml->EntryBreak[count($xml->EntryBreak)-1]; 
+                $event->entryDeadline = getDateTime($lastEntryBreak->ValidToDate);
             }
             
             // $event->officials = [];
@@ -1492,7 +1493,8 @@ function parseEvent($e, $startdate, $enddate, $clubs, $disciplines) {
     $event->endtime = $enddate->format('Ymd') . "T" . $enddate->format("His");
 
     if (isset($e->EntryBreak->ValidToDate)) {
-        $event->entryDeadline = getDateTime($e->EntryBreak->ValidToDate);
+        $lastEntryBreak = $e->EntryBreak[count($e->EntryBreak)-1]; 
+        $event->entryDeadline = getDateTime($lastEntryBreak->ValidToDate);
     }
 
 	$event->title = (string) $e->Name;
