@@ -15,7 +15,7 @@
 				<td><?php
 				        if ($e->location) {
 				            echo "<a href='http://maps.apple.com/?daddr=" . (string) $e->location['y'] . "," . (string) $e->location['x'] . "'>Apple Maps</a><br/>";
-				            echo "<a href='http://maps.google.com/?daddr=" . (string) $e->location['y'] . "," . (string) $e->location['x'] . "&saddr=Current%20Location'>Google Maps</a>";
+				            echo "<a href='https://www.google.com/maps/dir/?api=1&destination=" . (string) $e->location['y'] . "," . (string) $e->location['x'] . "'>Google Maps</a>";
 				        }
 				    ?></td>
 			</tr>

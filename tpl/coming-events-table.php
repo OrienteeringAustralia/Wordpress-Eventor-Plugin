@@ -3,7 +3,7 @@
 		<thead>
 		<tr>
 			<th>Day</th>
-			<th></th>
+			<!--th></th-->
 			<th>Date</th>
 			<th>Club</th>
 			<th>Event</th>
@@ -15,16 +15,16 @@
 		<?php foreach ($events as $e) { ?>
 			<tr>
 				<td><?php echo $e->weekday; ?></td>
-				<td><?php 
+				<!--td>< ?php 
 				    echo "[ics_button subject='". $e->title . "'" . 
 				         " description='" . $e->title . "   " . "http://eventor.orienteering.asn.au/Events/Show/" . $e->id . "'" .
 				         " location=''" .
-				         " start-date='" . $e->starttime . "'" .
-				         " end-date='" . $e->endtime . "']" .
+				         " start-date='" . $e->startdate . "'" .
+				         " end-date='" . $e->enddate . "']" .
 				         "<img src='/wp-content/plugins/ics-button/plugin/img/Calendar-Add.png' title='Add event to calendar' width=35 />" . 
 				         "[/ics_button]"
 				    ?>
-				</td>
+				</td-->
 				<td class='evt-date'><?php echo $e->date; ?></td>
 				<td><?php
 			            $logoFile = wp_upload_dir()['basedir'] . "/clublogos/" . $e->club . ".png";
@@ -46,7 +46,7 @@
 				<td><?php
 				        if ($e->location) {
 				            echo "<a href='http://maps.apple.com/?daddr=" . (string) $e->location['y'] . "," . (string) $e->location['x'] . "'>Apple Maps</a><br/>";
-				            echo "<a href='http://maps.google.com/?daddr=" . (string) $e->location['y'] . "," . (string) $e->location['x'] . "&saddr=Current%20Location'>Google Maps</a>";
+				            echo "<a href='https://www.google.com/maps/dir/?api=1&destination=" . (string) $e->location['y'] . "," . (string) $e->location['x'] . "'>Google Maps</a>";
 				        }
 				    ?></td>
 			</tr>

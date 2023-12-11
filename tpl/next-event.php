@@ -15,7 +15,7 @@ if (count($events)) {
         echo "</b>";
         if ($e->location) {
             echo " &nbsp;<span style='white-space: nowrap; font-size: 90%;'>[Directions by <a href='http://maps.apple.com/?daddr=" . (string) $e->location['y'] . "," . (string) $e->location['x'] . "'>Apple Maps</a>, ";
-            echo "<a href='http://maps.google.com/?daddr=" . (string) $e->location['y'] . "," . (string) $e->location['x'] . "&saddr=Current%20Location'>Google Maps</a>]</span>";
+            echo "<a href='https://www.google.com/maps/dir/?api=1&destination=" . (string) $e->location['y'] . "," . (string) $e->location['x'] . "'>Google Maps</a>]</span>";
         }
         echo "</center>";
 	return; 

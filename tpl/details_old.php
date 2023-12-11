@@ -112,14 +112,12 @@
 		<?php if ($event->location && $event->location['lat'] != 'n/a') { ?>
     		<dt>Driving Directions</dt>
             <dd><a href='http://maps.apple.com/?daddr=<?= $event->location['lat'] ?>,<?= $event->location['lng'] ?>'><img src="/wp-content/uploads/2017/08/AppleMaps.png" width=25/> Using Apple Maps</a>
-            <br/><a href='https://www.google.com/maps/dir/?api=1&destination=<?= $event->location['lat'] ?>,<?= $event->location['lng'] ?>'><img src="/wp-content/uploads/2017/08/GoogleMaps.png" width=25/> Using Google Maps</a></dd>
+            <br/><a href='http://maps.google.com/?daddr=<?= $event->location['lat'] ?>,<?= $event->location['lng'] ?>&saddr=Current%20Location'><img src="/wp-content/uploads/2017/08/GoogleMaps.png" width=25/> Using Google Maps</a></dd>
 		<?php } ?>
 		
 		<!--dd>< ?= $event->location['lat'] ?>, < ?= $event->location['lng'] ?></dd-->
 		<dt>Eventor</dt>
 		<dd><a target='_blank' href='http://eventor.orienteering.asn.au/Events/Show/<?= $event->id ?>'>View event on Eventor (opens in a new tab)</a></dd>
-		<dt>Risk Statement</dt>
-		<dd><a href="http://act.orienteering.asn.au/resources/event-management/risk-statement/">View Risk Statement</a></dd>
 	</dl>
 	
 	<?php if (isset($event->phoneNumber) || isset($event->mailAddress)) { ?>
