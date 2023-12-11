@@ -30,7 +30,7 @@ tr.OK {
 	/*background-color: #FAFFFA; */
 }
 
-tr.MP, tr.DNF {
+tr.MP, tr.DNF, tr.DSQ, tr.OT, tr.DNS, tr.NTR {
 	background-color: #FFFAFA;
 }
 

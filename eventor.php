@@ -541,6 +541,7 @@ class Eventor {
 			if (file_exists($tpl)) {
 
 				if ($mode == 'past') {
+        			$year     = date('Y');
 					$cache    = $resetcache ? 0 : 86400;
 					$todate   = min([$now, new DateTime("{$year}-12-31", $tz)]);
 					$todate->modify("+1 day");
@@ -1109,6 +1110,7 @@ class eventResult {
 	public $classes = [];
 
 	function __construct($xml, $byClasses = true) {
+	    //var_dump_pre($xml);
 		$Event = $xml->Event;
 		if (isset($Event->EventId)) {
 			$this->id = (int) $Event->EventId;
