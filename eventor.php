@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Eventor
  * Description: Integration with Eventor (http://eventor.orienteering.asn.au)
- * Version: 0.9.1
+ * Version: 0.9.2
  * License: GPL3
  */
 class Eventor {
