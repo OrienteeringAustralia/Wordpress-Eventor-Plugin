@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Eventor
  * Description: Integration with Eventor (http://eventor.orienteering.asn.au)
- * Version: 0.9.2
+ * Version: 0.9.3
  * License: GPL3
  */
 class Eventor {
@@ -602,8 +602,11 @@ class Eventor {
 
 						if ($mode == 'past') {
 							$event->results = false;
+							$event->extras = [];
+
 							if (isset($e->HashTableEntry)) {
 								foreach ($e->HashTableEntry as $h) {
+							                $event->extras[(string) $h->Key] = (string) $h->Value;
 									if ((string) $h->Key == "officialResult_{$event->raceid}") {
 										$event->results = true;
 									}
